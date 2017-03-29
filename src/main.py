@@ -15,4 +15,4 @@ def get_elite_users_id(input_path, output_path):
 
 
 if __name__ == "__main__":
-    get_elite_users_id('../data/input/yelp/yelp_academic_dataset_user.json', '../data/output/elite_users_id.json')
+    get_elite_users_id('../data/input/yelp/yelp_academic_dataset_user.json', '../data/output/elite_users_id.txt')
