@@ -49,16 +49,18 @@ def merge_review_metadata_with_user(input_path, output_path, users_path):
         outfile.close()
 
 
-def calculate_rating_variance(input_path, output_path):
+def calculate_rating_variance_review_len(input_path, output_path):
 
     with open(input_path) as infile, open(output_path, "wb") as outfile:
         for line in infile:
             user = json.loads(line)
             ratings = []
+            review_length = []
             for review in user["review_metadata"]:
-                print(int(review["stars"]))
                 ratings.append(int(review["stars"]))
+                review_length.append(int(review["review_len"]))
             user["rating_variance"] = np.var(ratings)
+            user["avg_review_len"] = np.mean(review_length)
             json.dump(user, outfile)
             outfile.write('\n')
     outfile.close()
@@ -69,7 +71,6 @@ def businesses_as_dict(input_path, output_path):
     with open(input_path) as infile, open(output_path, "wb") as outfile:
         for line in infile:
             business = json.loads(line)
-            print business
             businesses[business["business_id"]] = business
         json.dump(businesses, outfile)
     outfile.close()
@@ -91,11 +92,12 @@ def get_review_category(business_path, input_path, output_path):
                     categories = business["categories"]
 
     #               add 1 to each category and store in a dict
-                    for business_type in categories:
-                        if reviews_in_category.has_key(business_type):
-                            reviews_in_category[business_type] += 1
-                        else:
-                            reviews_in_category[business_type] = 1
+                    if(categories is not None):
+                        for business_type in categories:
+                            if reviews_in_category.has_key(business_type):
+                                reviews_in_category[business_type] += 1
+                            else:
+                                reviews_in_category[business_type] = 1
             user["reviews_in_category"] = reviews_in_category
             json.dump(user, outfile)
             outfile.write('\n')
@@ -106,6 +108,6 @@ if __name__ == "__main__":
     # get_elite_users_id('../data/input/yelp/yelp_academic_dataset_user.json', '../data/output/elite_users_id.txt')
     # extract_review_metadata_per_user('../data/input/review_try.json', '../data/temp/review_metadata_per_user.json')
     # merge_review_metadata_with_user('../data/temp/review_metadata_per_user.json', '../data/temp/user_with_review.json', '../data/input/user_try.json')
-    # calculate_rating_variance('../data/temp/user_with_review.json', '../data/temp/user_with_review_var.json')
+    calculate_rating_variance_review_len('../data/temp/user_with_review.json', '../data/temp/user_with_review_var.json')
     # businesses_as_dict('../data/input/business_try.json', '../data/temp/yelp_business_as_dict.json')
-    get_review_category('../data/temp/yelp_business_as_dict.json', '../data/temp/user_with_review_var.json', '../data/output/user_with_category_reviews.json')
+    # get_review_category('../data/temp/yelp_business_as_dict.json', '../data/temp/user_with_review_var.json', '../data/output/user_with_category_reviews.json')
