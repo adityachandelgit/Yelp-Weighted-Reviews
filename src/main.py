@@ -3,6 +3,9 @@ import re
 from collections import defaultdict
 from time import time
 import numpy as np
+import pandas as pd
+
+from datetime import date
 
 
 def get_elite_users_id(input_path, output_path):
@@ -104,10 +107,39 @@ def get_review_category(business_path, input_path, output_path):
     outfile.close()
 
 
+def get_user_training_dataframe(input_path, output_path, category):
+    # train = pd.DataFrame(columns=('avg_review_len', 'rating_variance', 'review_count', 'average_stars', 'number_of_fans','number_of_friends','number_of_review_category','joined_since'))
+    train = pd.DataFrame()
+    with open(input_path) as user_file, open(output_path, "wb") as outfile:
+        for line in user_file:
+            user = json.loads(line)
+            number_of_friends = len(user["friends"])
+            number_of_fans = user["fans"]
+            review_count = user["review_count"]
+            number_of_review_category = 0
+            review_category = user["reviews_in_category"]
+            if review_category.has_key(category):
+                number_of_review_category = review_category[category]
+                if review_count != 0:
+                    number_of_review_category = (float(number_of_review_category)/review_count) * 100
+
+            joining = user["yelping_since"].split("-")
+            join_date = date(int(joining[0]), int(joining[1]), int(joining[2]))
+            date_diff = date.today() - join_date
+            record = pd.Series([review_count, user["rating_variance"], review_count, user["average_stars"], number_of_fans, number_of_friends, number_of_review_category, date_diff.days])
+            # record = pd.Series([user["avg_review_len"], user["rating_variance"], review_count, user["average_stars"], number_of_fans, number_of_friends, number_of_review_category, date_diff.days])
+            # print record
+            train.append(record, ignore_index=True)
+            # print train
+        train.to_csv(outfile, sep=',')
+    outfile.close()
+
+
 if __name__ == "__main__":
     # get_elite_users_id('../data/input/yelp/yelp_academic_dataset_user.json', '../data/output/elite_users_id.txt')
     # extract_review_metadata_per_user('../data/input/review_try.json', '../data/temp/review_metadata_per_user.json')
     # merge_review_metadata_with_user('../data/temp/review_metadata_per_user.json', '../data/temp/user_with_review.json', '../data/input/user_try.json')
-    calculate_rating_variance_review_len('../data/temp/user_with_review.json', '../data/temp/user_with_review_var.json')
+    # calculate_rating_variance_review_len('../data/temp/user_with_review.json', '../data/temp/user_with_review_var.json')
     # businesses_as_dict('../data/input/business_try.json', '../data/temp/yelp_business_as_dict.json')
     # get_review_category('../data/temp/yelp_business_as_dict.json', '../data/temp/user_with_review_var.json', '../data/output/user_with_category_reviews.json')
+    get_user_training_dataframe('../data/output/user_with_category_reviews.json', '../data/output/training.csv', "Restaurants")
