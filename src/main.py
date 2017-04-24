@@ -53,7 +53,6 @@ def merge_review_metadata_with_user(input_path, output_path, users_path):
 
 
 def calculate_rating_variance_review_len(input_path, output_path):
-
     with open(input_path) as infile, open(output_path, "wb") as outfile:
         for line in infile:
             user = json.loads(line)
@@ -94,8 +93,8 @@ def get_review_category(business_path, input_path, output_path):
                     business = businesses[business_id]
                     categories = business["categories"]
 
-    #               add 1 to each category and store in a dict
-                    if(categories is not None):
+                    #               add 1 to each category and store in a dict
+                    if (categories is not None):
                         for business_type in categories:
                             if reviews_in_category.has_key(business_type):
                                 reviews_in_category[business_type] += 1
@@ -108,8 +107,8 @@ def get_review_category(business_path, input_path, output_path):
 
 
 def get_user_training_dataframe(input_path, output_path, category):
-    # train = pd.DataFrame(columns=('avg_review_len', 'rating_variance', 'review_count', 'average_stars', 'number_of_fans','number_of_friends','number_of_review_category','joined_since'))
-    train = pd.DataFrame()
+    # train = pd.DataFrame(columns=('avg_review_len', 'rating_variance', 'review_count', 'average_stars',
+    # 'number_of_fans','number_of_friends','number_of_review_category','joined_since'))
     with open(input_path) as user_file, open(output_path, "wb") as outfile:
         for line in user_file:
             user = json.loads(line)
@@ -121,17 +120,15 @@ def get_user_training_dataframe(input_path, output_path, category):
             if review_category.has_key(category):
                 number_of_review_category = review_category[category]
                 if review_count != 0:
-                    number_of_review_category = (float(number_of_review_category)/review_count) * 100
+                    number_of_review_category = (float(number_of_review_category) / review_count) * 100
 
             joining = user["yelping_since"].split("-")
             join_date = date(int(joining[0]), int(joining[1]), int(joining[2]))
             date_diff = date.today() - join_date
-            record = pd.Series([review_count, user["rating_variance"], review_count, user["average_stars"], number_of_fans, number_of_friends, number_of_review_category, date_diff.days])
-            # record = pd.Series([user["avg_review_len"], user["rating_variance"], review_count, user["average_stars"], number_of_fans, number_of_friends, number_of_review_category, date_diff.days])
-            # print record
-            train.append(record, ignore_index=True)
-            # print train
-        train.to_csv(outfile, sep=',')
+            record = np.asarray([user["avg_review_len"], user["rating_variance"], review_count, user["average_stars"],
+                                number_of_fans, number_of_friends, number_of_review_category, date_diff.days])
+            record.tofile(outfile, sep=',')
+            outfile.write("\n")
     outfile.close()
 
 
@@ -142,4 +139,5 @@ if __name__ == "__main__":
     # calculate_rating_variance_review_len('../data/temp/user_with_review.json', '../data/temp/user_with_review_var.json')
     # businesses_as_dict('../data/input/business_try.json', '../data/temp/yelp_business_as_dict.json')
     # get_review_category('../data/temp/yelp_business_as_dict.json', '../data/temp/user_with_review_var.json', '../data/output/user_with_category_reviews.json')
-    get_user_training_dataframe('../data/output/user_with_category_reviews.json', '../data/output/training.csv', "Restaurants")
+    get_user_training_dataframe('../data/output/user_with_category_reviews.json', '../data/output/training.csv',
+                                "Restaurants")
