@@ -132,6 +132,20 @@ def get_user_training_dataframe(input_path, output_path, category):
     outfile.close()
 
 
+def reviews_per_business(input_path, output_path):
+    review_of_a_business = defaultdict(list)
+    with open(input_path) as infile, open(output_path, "wb") as outfile:
+        for line in infile:
+            review = json.loads(line)
+            metadata = {}
+            metadata["review_id"] = review["review_id"]
+            metadata["user_id"] = review["business_id"]
+            metadata["stars"] = review["stars"]
+            review_of_a_business[review["business_id"]].append(metadata)
+        json.dump(review_of_a_business, outfile)
+    outfile.close()
+
+
 if __name__ == "__main__":
     # get_elite_users_id('../data/input/yelp/yelp_academic_dataset_user.json', '../data/output/elite_users_id.txt')
     # extract_review_metadata_per_user('../data/input/review_try.json', '../data/temp/review_metadata_per_user.json')
@@ -139,5 +153,6 @@ if __name__ == "__main__":
     # calculate_rating_variance_review_len('../data/temp/user_with_review.json', '../data/temp/user_with_review_var.json')
     # businesses_as_dict('../data/input/business_try.json', '../data/temp/yelp_business_as_dict.json')
     # get_review_category('../data/temp/yelp_business_as_dict.json', '../data/temp/user_with_review_var.json', '../data/output/user_with_category_reviews.json')
-    get_user_training_dataframe('../data/output/user_with_category_reviews.json', '../data/output/training.csv',
-                                "Restaurants")
+    # get_user_training_dataframe('../data/output/user_with_category_reviews.json', '../data/output/training.csv',
+    #                             "Restaurants")
+    reviews_per_business('../data/input/review_try.json', '../data/temp/review_metadata_per_business.json')
