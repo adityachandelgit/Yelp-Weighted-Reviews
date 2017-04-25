@@ -7,7 +7,6 @@ from time import time
 import numpy as np
 from datetime import date
 
-from sklearn.cluster import KMeans
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
@@ -64,7 +63,6 @@ def merge_review_metadata_with_user(input_path, output_path, users_path):
 
 
 def calculate_rating_variance_review_len(input_path, output_path):
-
     with open(input_path) as infile, open(output_path, "wb") as outfile:
         for line in infile:
             user = json.loads(line)
@@ -124,23 +122,23 @@ def extract_elite_users_features(input_path, path_elite_users_features, review_c
         for line in user_file:
             user = json.loads(line)
 
-            # an_elite_feature = [len(user["friends"]), user["fans"], user['review_count'], user['rating_variance'],
-            #                     user["avg_review_len"], user["average_stars"]]
+            an_elite_feature = [len(user["friends"]), user["fans"], user['review_count'], user['rating_variance'],
+                                user["avg_review_len"], user["average_stars"]]
 
-            an_elite_feature = [len(user["friends"]), user['review_count']]
+            # an_elite_feature = [len(user["friends"]), user['review_count']]
 
-            # total_review_len = 0
-            # count_reviews = 0
-            # for review in user['review_metadata']:
-            #     count_reviews += 1
-            #     total_review_len += review['review_len']
-            # an_elite_feature.append(float(total_review_len) / float(count_reviews))
+            total_review_len = 0
+            count_reviews = 0
+            for review in user['review_metadata']:
+                count_reviews += 1
+                total_review_len += review['review_len']
+            an_elite_feature.append(float(total_review_len) / float(count_reviews))
 
-            # date_split = user['yelping_since'].split('-')
-            # d0 = date(int(date_split[0]), int(date_split[1]), int(date_split[2]))
-            # d1 = date.today()
-            # delta = d1 - d0
-            # an_elite_feature.append(delta.days)
+            date_split = user['yelping_since'].split('-')
+            d0 = date(int(date_split[0]), int(date_split[1]), int(date_split[2]))
+            d1 = date.today()
+            delta = d1 - d0
+            an_elite_feature.append(delta.days)
 
             percentage = 0.0
             if user['reviews_in_category'].has_key(review_category):
@@ -192,13 +190,13 @@ def classifier(user_features):
              "Decision Tree", "Random Forest", "Neural Net", "AdaBoost",
              "Naive Bayes", "QDA"]
     classifiers = [
-        # KNeighborsClassifier(3)
-        DecisionTreeClassifier(max_depth=5)
-        # RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
-        # MLPClassifier(alpha=1),
-        # AdaBoostClassifier(),
-        # GaussianNB(),
-        # QuadraticDiscriminantAnalysis()
+        KNeighborsClassifier(3),
+        DecisionTreeClassifier(max_depth=5),
+        RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
+        MLPClassifier(alpha=1),
+        AdaBoostClassifier(),
+        GaussianNB(),
+        QuadraticDiscriminantAnalysis()
     ]
 
     with open('Rest_Elites.txt', 'wb') as rest_elites:
@@ -217,10 +215,8 @@ def classifier(user_features):
             print count1
             print count0
 
-
-            # print names[idx] + ': ' + str(clf.score(data, labels))
+            print names[idx] + ': ' + str(clf.score(data, labels))
         print 'Finished running the classification algorithms.\n'
-
 
 
 def extract_features_with_label(input_path, output_path):
@@ -255,7 +251,7 @@ def get_user_training_dataframe(input_path, output_path, category):
             join_date = date(int(joining[0]), int(joining[1]), int(joining[2]))
             date_diff = date.today() - join_date
             record = np.asarray([user["avg_review_len"], user["rating_variance"], review_count, user["average_stars"],
-                                number_of_fans, number_of_friends, number_of_review_category, date_diff.days])
+                                 number_of_fans, number_of_friends, number_of_review_category, date_diff.days])
             record.tofile(outfile, sep=',')
             outfile.write("\n")
     outfile.close()
@@ -305,4 +301,4 @@ if __name__ == "__main__":
     # get_user_training_dataframe('../data/output/user_with_category_reviews.json', '../data/output/training.csv',
     #                             "Restaurants")
     # reviews_per_business('../data/input/review_try.json', '../data/temp/review_metadata_per_business.json')
-    extract_features_with_label('../data/output/usersfeatry.csv','../data/output/feature_with_labels.csv')
+    extract_features_with_label('../data/output/usersfeatry.csv', '../data/output/feature_with_labels.csv')
