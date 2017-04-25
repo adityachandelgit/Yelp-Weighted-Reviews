@@ -14,6 +14,9 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
+import pandas as pd
+
+from datetime import date
 
 
 def get_elite_users_id(input_path, output_path):
@@ -61,6 +64,7 @@ def merge_review_metadata_with_user(input_path, output_path, users_path):
 
 
 def calculate_rating_variance_review_len(input_path, output_path):
+
     with open(input_path) as infile, open(output_path, "wb") as outfile:
         for line in infile:
             user = json.loads(line)
@@ -101,7 +105,7 @@ def get_review_category(business_path, input_path, output_path):
                     business = businesses[business_id]
                     categories = business["categories"]
 
-                    #               add 1 to each category and store in a dict
+                    # Add 1 to each category and store in a dict
                     if categories is not None:
                         for business_type in categories:
                             if reviews_in_category.has_key(business_type):
@@ -231,6 +235,58 @@ def extract_features_with_label(input_path, output_path):
         outfile.close()
 
 
+def get_user_training_dataframe(input_path, output_path, category):
+    # train = pd.DataFrame(columns=('avg_review_len', 'rating_variance', 'review_count', 'average_stars',
+    # 'number_of_fans','number_of_friends','number_of_review_category','joined_since'))
+    with open(input_path) as user_file, open(output_path, "wb") as outfile:
+        for line in user_file:
+            user = json.loads(line)
+            number_of_friends = len(user["friends"])
+            number_of_fans = user["fans"]
+            review_count = user["review_count"]
+            number_of_review_category = 0
+            review_category = user["reviews_in_category"]
+            if review_category.has_key(category):
+                number_of_review_category = review_category[category]
+                if review_count != 0:
+                    number_of_review_category = (float(number_of_review_category) / review_count) * 100
+
+            joining = user["yelping_since"].split("-")
+            join_date = date(int(joining[0]), int(joining[1]), int(joining[2]))
+            date_diff = date.today() - join_date
+            record = np.asarray([user["avg_review_len"], user["rating_variance"], review_count, user["average_stars"],
+                                number_of_fans, number_of_friends, number_of_review_category, date_diff.days])
+            record.tofile(outfile, sep=',')
+            outfile.write("\n")
+    outfile.close()
+
+
+def reviews_per_business(input_path, output_path):
+    review_of_a_business = defaultdict(list)
+    with open(input_path) as infile, open(output_path, "wb") as outfile:
+        for line in infile:
+            review = json.loads(line)
+            metadata = {}
+            metadata["review_id"] = review["review_id"]
+            metadata["user_id"] = review["business_id"]
+            metadata["stars"] = review["stars"]
+            review_of_a_business[review["business_id"]].append(metadata)
+        json.dump(review_of_a_business, outfile)
+    outfile.close()
+
+
+def extract_features_with_label(input_path, output_path):
+    with open(input_path) as infile, open(output_path, "wb") as outfile:
+        for line in infile:
+            user = json.loads(line)
+            features = user["features"]
+            features.append(user["elite"])
+            record = np.asarray(features)
+            record.tofile(outfile, sep=',')
+            outfile.write("\n")
+        outfile.close()
+
+
 if __name__ == "__main__":
     # get_elite_users_id('../data/input/yelp/yelp_academic_dataset_user.json', '../data/output/elite_users_id.txt')
     # extract_review_metadata_per_user('../data/input/review_try.json', '../data/temp/review_metadata_per_user.json')
@@ -244,3 +300,9 @@ if __name__ == "__main__":
     classifier('../data/output/users_features.csv')
     # extract_features_with_label('../data/output/users_features.csv', '../data/output/feature_with_labels.csv')
 
+
+    # get_review_category('../data/temp/yelp_business_as_dict.json', '../data/temp/user_with_review_var.json', '../data/output/user_with_category_reviews.json')
+    # get_user_training_dataframe('../data/output/user_with_category_reviews.json', '../data/output/training.csv',
+    #                             "Restaurants")
+    # reviews_per_business('../data/input/review_try.json', '../data/temp/review_metadata_per_business.json')
+    extract_features_with_label('../data/output/usersfeatry.csv','../data/output/feature_with_labels.csv')
